@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>
+        学食座席予約システム
+    </title>
+
+    <style>
+
+        body {
+
+            font-family: sans-serif;
+            background-color: #f5f5f5;
+            padding: 30px;
+
+        }
+
+        .page {
+
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+
+        }
+
+        h1,
+        h2,
+        h3 {
+
+            margin-bottom: 15px;
+
+        }
+
+        input,
+        select,
+        button {
+
+            padding: 10px;
+            font-size: 16px;
+            margin-top: 10px;
+
+        }
+
+        button {
+
+            cursor: pointer;
+            margin-right: 10px;
+
+        }
+
+        .hidden {
+
+            display: none;
+
+        }
+
+        .seat-area {
+
+            display: grid;
+            grid-template-columns: repeat(5, 70px);
+            gap: 15px;
+            margin-top: 20px;
+            width: fit-content;
+
+        }
+
+        .seat {
+
+            width: 70px;
+            height: 70px;
+            background-color: lightgreen;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+
+        }
+
+        .seat:hover {
+
+            transform: scale(1.05);
+
+        }
+
+        .occupied {
+
+            background-color: red;
+            color: white;
+            cursor: not-allowed;
+
+        }
+
+        .selected {
+
+            background-color: orange;
+
+        }
+
+        .legend {
+
+            margin-top: 20px;
+
+        }
+
+        .time-display {
+
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 15px;
+            margin-bottom: 10px;
+
+        }
+
+        .status-text {
+
+            margin-top: 15px;
+            font-weight: bold;
+
+        }
+
+        .member-box {
+
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+
+        }
+
+        .member-item {
+
+            margin-bottom: 8px;
+
+        }
+
+        .reservation-info {
+
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #eef5ff;
+            border-radius: 8px;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <!-- ログイン -->
+
+    <div id="loginPage"
+         class="page">
+
+        <h1>
+            学食座席予約システム
+        </h1>
+
+        <h2>
+            ログイン
+        </h2>
+
+        <p>
+            ※ログインは7桁の学籍番号のみ
+        </p>
+
+        <input
+            type="text"
+            id="studentId"
+            placeholder="7桁の学籍番号">
+
+        <br>
+
+        <button id="loginButton">
+
+            ログイン
+
+        </button>
+
+    </div>
+
+    <!-- メイン -->
+
+    <div id="mainPage"
+         class="page hidden">
+
+        <h2>
+            席予約シミュレーション
+        </h2>
+
+        <div>
+
+            ログイン中：
+            <span id="userText"></span>
+
+        </div>
+
+        <!-- 日付 -->
+
+        <h3>
+            日付選択
+        </h3>
+
+        <input
+            type="date"
+            id="dateSelect">
+
+        <!-- グループ作成 -->
+
+        <h3>
+            グループ作成
+        </h3>
+
+        <p>
+            ※自分以外の番号を追加して作成
+        </p>
+
+        <input
+            type="text"
+            id="groupName"
+            placeholder="グループ名">
+
+        <br>
+
+        <input
+            type="text"
+            id="memberIds"
+            placeholder="自分以外の番号をカンマ区切り">
+
+        <br>
+
+        <button id="createGroupButton">
+
+            グループ作成
+
+        </button>
+
+        <!-- グループ選択 -->
+
+        <h3>
+            グループ選択
+        </h3>
+
+        <select id="groupSelect">
+        </select>
+
+        <div class="member-box"
+             id="memberBox">
+        </div>
+
+        <!-- 時間帯 -->
+
+        <h3>
+            予約時間帯
+        </h3>
+
+        <select id="timeSlotSelect">
+
+            <option value="0">
+                12:00〜12:20
+            </option>
+
+            <option value="1">
+                12:20〜12:40
+            </option>
+
+            <option value="2">
+                12:40〜13:00
+            </option>
+
+        </select>
+
+        <!-- 時刻 -->
+
+        <div class="time-display">
+
+            現在時刻：
+            <span id="timeText">
+                12:00
+            </span>
+
+        </div>
+
+        <button id="rewindButton">
+
+            1分戻す
+
+        </button>
+
+        <button id="fastForwardButton">
+
+            1分進める
+
+        </button>
+
+        <!-- 凡例 -->
+
+        <div class="legend">
+
+            緑：空席　
+            オレンジ：選択中　
+            赤：予約済み
+
+        </div>
+
+        <div class="status-text"
+             id="statusText">
+
+            席を選択してください
+
+        </div>
+
+        <button id="reserveButton">
+
+            選択席を予約
+
+        </button>
+
+        <!-- 座席 -->
+
+        <div class="seat-area"
+             id="seatArea">
+        </div>
+
+        <!-- 予約情報 -->
+
+        <div class="reservation-info"
+             id="reservationInfo">
+
+            現在予約なし
+
+        </div>
+
+    </div>
+
+    <script>
+
+        // ======================
+        // 初期化
+        // ======================
+
+        localStorage.removeItem(
+            "groups"
+        );
+
+        // ======================
+        // データ
+        // ======================
+
+        let groups = [];
+
+        let visibleGroups = [];
+
+        let currentUser = "";
+
+        let selectedSeats = [];
+
+        let currentMinute = 0;
+
+        let todayAbsent = {};
+
+        let reservations = {};
+
+        // ======================
+        // 要素
+        // ======================
+
+        const loginPage =
+        document.getElementById(
+            "loginPage"
+        );
+
+        const mainPage =
+        document.getElementById(
+            "mainPage"
+        );
+
+        const userText =
+        document.getElementById(
+            "userText"
+        );
+
+        const statusText =
+        document.getElementById(
+            "statusText"
+        );
+
+        const timeText =
+        document.getElementById(
+            "timeText"
+        );
+
+        const groupSelect =
+        document.getElementById(
+            "groupSelect"
+        );
+
+        const memberBox =
+        document.getElementById(
+            "memberBox"
+        );
+
+        const seatArea =
+        document.getElementById(
+            "seatArea"
+        );
+
+        const reservationInfo =
+        document.getElementById(
+            "reservationInfo"
+        );
+
+        const dateSelect =
+        document.getElementById(
+            "dateSelect"
+        );
+
+        // ======================
+        // 今日の日付
+        // ======================
+
+        const today =
+        new Date();
+
+        const yyyy =
+        today.getFullYear();
+
+        const mm =
+        String(
+            today.getMonth() + 1
+        ).padStart(2, "0");
+
+        const dd =
+        String(
+            today.getDate()
+        ).padStart(2, "0");
+
+        dateSelect.value =
+        `${yyyy}-${mm}-${dd}`;
+
+        // ======================
+        // 日付キー
+        // ======================
+
+        function getDateKey() {
+
+            return dateSelect.value;
+
+        }
+
+        // ======================
+        // スロット取得
+        // ======================
+
+        function getCurrentSlot() {
+
+            if(currentMinute < 20) {
+
+                return 0;
+
+            }
+
+            if(currentMinute < 40) {
+
+                return 1;
+
+            }
+
+            return 2;
+
+        }
+
+        // ======================
+        // 予約データ初期化
+        // ======================
+
+        function ensureReservationData() {
+
+            const dateKey =
+            getDateKey();
+
+            if(!reservations[dateKey]) {
+
+                reservations[dateKey] = {
+
+                    0: {},
+                    1: {},
+                    2: {}
+
+                };
+
+            }
+
+        }
+
+        // ======================
+        // 座席生成
+        // ======================
+
+        for(let i = 1; i <= 20; i++) {
+
+            const seat =
+            document.createElement(
+                "div"
+            );
+
+            seat.classList.add(
+                "seat"
+            );
+
+            seat.textContent =
+            i;
+
+            seat.dataset.number =
+            i;
+
+            seat.addEventListener(
+                "click",
+                function() {
+
+                    const currentSlot =
+                    getCurrentSlot();
+
+                    const dateKey =
+                    getDateKey();
+
+                    ensureReservationData();
+
+                    if(
+                        reservations[dateKey][currentSlot][i]
+                    ) {
+
+                        return;
+
+                    }
+
+                    const index =
+                    selectedSeats.indexOf(i);
+
+                    if(index === -1) {
+
+                        selectedSeats.push(i);
+
+                    }
+
+                    else {
+
+                        selectedSeats.splice(
+                            index,
+                            1
+                        );
+
+                    }
+
+                    if(
+                        selectedSeats.length === 0
+                    ) {
+
+                        statusText.textContent =
+                        "席を選択してください";
+
+                    }
+
+                    else {
+
+                        statusText.textContent =
+                        "選択中：" +
+                        selectedSeats.join(", ");
+
+                    }
+
+                    updateSeats();
+
+                }
+            );
+
+            seatArea.appendChild(
+                seat
+            );
+
+        }
+
+        const seats =
+        document.querySelectorAll(
+            ".seat"
+        );
+
+        // ======================
+        // ログイン
+        // ======================
+
+        document.getElementById(
+            "loginButton"
+        ).addEventListener(
+            "click",
+            function() {
+
+                const studentId =
+                document.getElementById(
+                    "studentId"
+                ).value.trim();
+
+                const regex =
+                /^\d{7}$/;
+
+                if(
+                    !regex.test(studentId)
+                ) {
+
+                    alert(
+                        "7桁の数字で入力してください"
+                    );
+
+                    return;
+
+                }
+
+                currentUser =
+                studentId;
+
+                userText.textContent =
+                currentUser;
+
+                loginPage.classList.add(
+                    "hidden"
+                );
+
+                mainPage.classList.remove(
+                    "hidden"
+                );
+
+                updateGroupSelect();
+
+                updateSeats();
+
+            }
+        );
+
+        // ======================
+        // グループ作成
+        // ======================
+
+        document.getElementById(
+            "createGroupButton"
+        ).addEventListener(
+            "click",
+            function() {
+
+                const groupName =
+                document.getElementById(
+                    "groupName"
+                ).value.trim();
+
+                const memberInput =
+                document.getElementById(
+                    "memberIds"
+                ).value;
+
+                if(groupName === "") {
+
+                    alert(
+                        "グループ名を入力してください"
+                    );
+
+                    return;
+
+                }
+
+                let members =
+                memberInput.split(",");
+
+                members =
+                members.map(
+                    function(member) {
+
+                        return member.trim();
+
+                    }
+                );
+
+                members =
+                members.filter(
+                    function(member) {
+
+                        return member !== "";
+
+                    }
+                );
+
+                // 自分を追加
+                members.push(
+                    currentUser
+                );
+
+                // 重複削除
+                members =
+                [...new Set(members)];
+
+                groups.push({
+
+                    id:
+                    Date.now(),
+
+                    name:
+                    groupName,
+
+                    members:
+                    members
+
+                });
+
+                updateGroupSelect();
+
+                document.getElementById(
+                    "groupName"
+                ).value = "";
+
+                document.getElementById(
+                    "memberIds"
+                ).value = "";
+
+            }
+        );
+
+        // ======================
+        // グループ一覧更新
+        // ======================
+
+        function updateGroupSelect() {
+
+            groupSelect.innerHTML = "";
+
+            visibleGroups =
+            groups.filter(
+                function(group) {
+
+                    return group.members.includes(
+                        currentUser
+                    );
+
+                }
+            );
+
+            visibleGroups.forEach(
+                function(group, index) {
+
+                    const absentList =
+                    todayAbsent[group.id]
+                    || [];
+
+                    const activeMembers =
+                    group.members.filter(
+                        function(member) {
+
+                            return !absentList.includes(member);
+
+                        }
+                    );
+
+                    const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                    option.value =
+                    index;
+
+                    option.textContent =
+                    group.name +
+                    "（" +
+                    activeMembers.length +
+                    "人参加）";
+
+                    groupSelect.appendChild(
+                        option
+                    );
+
+                }
+            );
+
+            updateMemberBox();
+
+        }
+
+        // ======================
+        // メンバー表示
+        // ======================
+
+        function updateMemberBox() {
+
+            const group =
+            visibleGroups[groupSelect.value];
+
+            if(!group) {
+
+                memberBox.innerHTML = "";
+                return;
+
+            }
+
+            memberBox.innerHTML = "";
+
+            const absentList =
+            todayAbsent[group.id]
+            || [];
+
+            group.members.forEach(
+                function(member) {
+
+                    const div =
+                    document.createElement(
+                        "div"
+                    );
+
+                    div.classList.add(
+                        "member-item"
+                    );
+
+                    const checkbox =
+                    document.createElement(
+                        "input"
+                    );
+
+                    checkbox.type =
+                    "checkbox";
+
+                    checkbox.checked =
+                    !absentList.includes(member);
+
+                    checkbox.addEventListener(
+                        "change",
+                        function() {
+
+                            if(
+                                !todayAbsent[group.id]
+                            ) {
+
+                                todayAbsent[group.id]
+                                = [];
+
+                            }
+
+                            if(
+                                checkbox.checked
+                            ) {
+
+                                todayAbsent[group.id]
+                                =
+                                todayAbsent[group.id]
+                                .filter(
+                                    function(data) {
+
+                                        return data !== member;
+
+                                    }
+                                );
+
+                            }
+
+                            else {
+
+                                // 自分が不参加なら予約不可
+                                if(
+                                    member === currentUser
+                                ) {
+
+                                    alert(
+                                        "自分が不参加の場合は予約できません"
+                                    );
+
+                                }
+
+                                todayAbsent[group.id]
+                                .push(member);
+
+                            }
+
+                            updateGroupSelect();
+
+                        }
+                    );
+
+                    div.appendChild(
+                        checkbox
+                    );
+
+                    div.append(
+                        " " + member
+                    );
+
+                    memberBox.appendChild(
+                        div
+                    );
+
+                }
+            );
+
+        }
+
+        groupSelect.addEventListener(
+            "change",
+            function() {
+
+                updateMemberBox();
+
+            }
+        );
+
+        // ======================
+        // 座席更新
+        // ======================
+
+        function updateSeats() {
+
+            ensureReservationData();
+
+            seats.forEach(
+                function(seat) {
+
+                    seat.classList.remove(
+                        "occupied"
+                    );
+
+                    seat.classList.remove(
+                        "selected"
+                    );
+
+                }
+            );
+
+            const currentSlot =
+            getCurrentSlot();
+
+            const dateKey =
+            getDateKey();
+
+            const currentReservations =
+            reservations[dateKey][currentSlot];
+
+            Object.keys(currentReservations)
+            .forEach(
+                function(seatNumber) {
+
+                    seats[seatNumber - 1]
+                    .classList.add(
+                        "occupied"
+                    );
+
+                }
+            );
+
+            selectedSeats.forEach(
+                function(number) {
+
+                    if(
+                        !currentReservations[number]
+                    ) {
+
+                        seats[number - 1]
+                        .classList.add(
+                            "selected"
+                        );
+
+                    }
+
+                }
+            );
+
+            const minuteText =
+            String(currentMinute)
+            .padStart(2, "0");
+
+            timeText.textContent =
+            "12:" +
+            minuteText;
+
+            updateReservationInfo();
+
+        }
+
+        // ======================
+        // 予約情報表示
+        // ======================
+
+        function updateReservationInfo() {
+
+            const currentSlot =
+            getCurrentSlot();
+
+            const dateKey =
+            getDateKey();
+
+            const currentReservations =
+            reservations[dateKey][currentSlot];
+
+            const keys =
+            Object.keys(currentReservations);
+
+            if(keys.length === 0) {
+
+                reservationInfo.textContent =
+                "現在予約なし";
+
+                return;
+
+            }
+
+            let text =
+            "現在の予約：<br>";
+
+            keys.forEach(
+                function(seatNumber) {
+
+                    const data =
+                    currentReservations[seatNumber];
+
+                    text +=
+                    "席" +
+                    seatNumber +
+                    " → " +
+                    data.group +
+                    "<br>";
+
+                }
+            );
+
+            reservationInfo.innerHTML =
+            text;
+
+        }
+
+        // ======================
+        // 予約
+        // ======================
+
+        document.getElementById(
+            "reserveButton"
+        ).addEventListener(
+            "click",
+            function() {
+
+                ensureReservationData();
+
+                const group =
+                visibleGroups[groupSelect.value];
+
+                if(!group) {
+
+                    return;
+
+                }
+
+                const absentList =
+                todayAbsent[group.id]
+                || [];
+
+                // 自分が不参加なら予約不可
+                if(
+                    absentList.includes(
+                        currentUser
+                    )
+                ) {
+
+                    alert(
+                        "自分が不参加のグループは予約できません"
+                    );
+
+                    return;
+
+                }
+
+                const activeMembers =
+                group.members.filter(
+                    function(member) {
+
+                        return !absentList.includes(member);
+
+                    }
+                );
+
+                const requiredSeats =
+                activeMembers.length;
+
+                if(
+                    selectedSeats.length
+                    !== requiredSeats
+                ) {
+
+                    alert(
+                        requiredSeats +
+                        "席選択してください"
+                    );
+
+                    return;
+
+                }
+
+                const currentSlot =
+                getCurrentSlot();
+
+                const dateKey =
+                getDateKey();
+
+                for(
+                    let seat of selectedSeats
+                ) {
+
+                    if(
+                        reservations[dateKey][currentSlot][seat]
+                    ) {
+
+                        alert(
+                            seat +
+                            "番席は予約済みです"
+                        );
+
+                        return;
+
+                    }
+
+                }
+
+                selectedSeats.forEach(
+                    function(seat) {
+
+                        reservations[dateKey][currentSlot][seat]
+                        = {
+
+                            group:
+                            group.name,
+
+                            users:
+                            activeMembers
+
+                        };
+
+                    }
+                );
+
+                statusText.textContent =
+                group.name +
+                " を予約しました";
+
+                selectedSeats = [];
+
+                updateSeats();
+
+            }
+        );
+
+        // ======================
+        // 時間操作
+        // ======================
+
+        document.getElementById(
+            "fastForwardButton"
+        ).addEventListener(
+            "click",
+            function() {
+
+                if(currentMinute < 59) {
+
+                    currentMinute++;
+
+                }
+
+                selectedSeats = [];
+
+                updateSeats();
+
+            }
+        );
+
+        document.getElementById(
+            "rewindButton"
+        ).addEventListener(
+            "click",
+            function() {
+
+                if(currentMinute > 0) {
+
+                    currentMinute--;
+
+                }
+
+                selectedSeats = [];
+
+                updateSeats();
+
+            }
+        );
+
+        // ======================
+        // 日付変更
+        // ======================
+
+        dateSelect.addEventListener(
+            "change",
+            function() {
+
+                selectedSeats = [];
+
+                updateSeats();
+
+            }
+        );
+
+    </script>
+
+</body>
+
+</html>
